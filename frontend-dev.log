@@ -1,0 +1,23 @@
+
+> project-vault@0.1.0 dev:frontend
+> npm run dev --workspace=frontend
+
+
+> @project-vault/client@0.1.0 dev
+> vite
+
+Port 5173 is in use, trying another one...
+Port 5174 is in use, trying another one...
+
+  [32m[1mVITE[22m v8.2.1[39m  [2mready in [0m[1m235[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5175[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+npm error Lifecycle script `dev` failed with error:
+npm error code 1
+npm error path D:\ProjectVault\frontend
+npm error workspace @project-vault/client@0.1.0
+npm error location D:\ProjectVault\frontend
+npm error command failed
+npm error command C:\windows\system32\cmd.exe /d /s /c vite

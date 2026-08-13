@@ -1,0 +1,9 @@
+{
+  "name": "@project-vault/sandbox-worker",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "nodemon src/worker.js",
+    "start": "node src/worker.js"
+  }
+}

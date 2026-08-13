@@ -1,0 +1,20 @@
+{
+  "name": "project-vault",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A verified project showcase platform for students.",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "sandbox-worker"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:worker": "npm run dev --workspace=sandbox-worker"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
