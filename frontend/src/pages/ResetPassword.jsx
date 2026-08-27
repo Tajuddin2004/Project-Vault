@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Logo, VaultLogo } from '../components/Logo';
 import { authApi } from '../api/auth';
-
-const RESET_MINUTES = 30;
+import { RESET_MINUTES } from '../utils/constants';
 
 function EyeIcon() {
   return (

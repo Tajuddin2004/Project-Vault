@@ -31,6 +31,9 @@ const userSchema = new mongoose.Schema({
   resetPasswordToken: String,
   resetPasswordExpires: Date,
   profile: profileSchema,
+  /** ObjectId references to every project this user has uploaded */
+  projects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Project' }],
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);
+

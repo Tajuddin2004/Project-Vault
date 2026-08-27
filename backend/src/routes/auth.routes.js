@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { checkEmail, forgotPassword, getMe, githubOAuth, googleOAuth, login, register, resendOtp, resetPassword, updateProfile, verifyOtp, verifyResetToken } from '../controllers/auth.controller.js';
 import { requireAuth } from '../middleware/auth.middleware.js';
+import { upload } from '../middleware/upload.middleware.js';
 
 const router = Router();
 
@@ -15,6 +16,11 @@ router.post('/forgot-password', forgotPassword);
 router.get('/verify-reset-token', verifyResetToken);
 router.post('/reset-password', resetPassword);
 router.get('/me', requireAuth, getMe);
-router.put('/profile', requireAuth, updateProfile);
+router.put(
+  '/profile',
+  requireAuth,
+  upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'resume', maxCount: 1 }]),
+  updateProfile
+);
 
 export default router;

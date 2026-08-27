@@ -1,9 +1,32 @@
 const API_BASE = 'http://localhost:5000/api';
+let csrfTokenCache = null;
+
+export async function fetchCsrfToken() {
+  try {
+    const res = await fetch(`${API_BASE}/csrf-token`);
+    const data = await res.json();
+    if (data.csrfToken) {
+      csrfTokenCache = data.csrfToken;
+    }
+    return csrfTokenCache;
+  } catch (e) {
+    return null;
+  }
+}
 
 export async function apiRequest(endpoint, method = 'GET', body = null, token = null) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  if (method !== 'GET' && method !== 'HEAD') {
+    if (!csrfTokenCache) {
+      await fetchCsrfToken();
+    }
+    if (csrfTokenCache) {
+      headers['X-CSRF-Token'] = csrfTokenCache;
+    }
   }
 
   try {
@@ -48,4 +71,17 @@ export const authApi = {
   resetPassword: (payload) => apiRequest('/auth/reset-password', 'POST', payload),
   getMe: (token) => apiRequest('/auth/me', 'GET', null, token),
   updateProfile: (payload, token) => apiRequest('/auth/profile', 'PUT', payload, token),
+  updateProfileFormData: async (formData, token) => {
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/auth/profile`, {
+      method: 'PUT',
+      headers,
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update profile');
+    return data;
+  },
 };

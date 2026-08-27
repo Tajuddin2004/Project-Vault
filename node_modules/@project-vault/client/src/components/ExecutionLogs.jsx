@@ -41,12 +41,21 @@ export function ExecutionLogs({ logs = [], containerId = 'cnt-8942-ec2', exitCod
       </div>
 
       <div className="pv-terminal-body font-mono">
-        {activeLogs.map((log, idx) => (
-          <div key={idx} className={`pv-log-line pv-log-${log.type || 'info'}`}>
-            <span className="pv-log-time">[{log.time || `00:0${idx}`}]</span>
-            <span className="pv-log-text">{log.msg || log.text}</span>
-          </div>
-        ))}
+        {activeLogs.map((log, idx) => {
+          const isString = typeof log === 'string';
+          const logText = isString ? log : (log.msg || log.text || '');
+          const logType = isString
+            ? (log.includes('SUCCESS') || log.includes('PASS') ? 'pass' : log.includes('ERR') || log.includes('Error') ? 'err' : 'info')
+            : (log.type || 'info');
+          const logTime = isString ? null : (log.time || `00:0${idx}`);
+
+          return (
+            <div key={idx} className={`pv-log-line pv-log-${logType}`}>
+              {logTime && <span className="pv-log-time">[{logTime}]</span>}
+              <span className="pv-log-text">{logText}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

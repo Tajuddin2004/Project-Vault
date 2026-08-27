@@ -1,17 +1,8 @@
 import React from 'react';
-
-const STAGES = [
-  { id: 'imported', label: 'Imported', desc: 'Git Hook Connected' },
-  { id: 'analyzed', label: 'Analyzed', desc: 'AST & Dependencies' },
-  { id: 'built', label: 'Built', desc: 'Docker Image Compiled' },
-  { id: 'executed', label: 'Executed', desc: 'Unit Tests & Scans' },
-  { id: 'verified', label: 'Verified', desc: 'Proof Telemetry Saved' },
-  { id: 'reviewed', label: 'Reviewed', desc: 'Faculty Evaluation' },
-  { id: 'published', label: 'Published', desc: 'Public Credible Proof' },
-];
+import { VERIFICATION_STAGES } from '../utils/constants';
 
 export function VerificationTimeline({ currentStage = 'verified', timestamp = '2026-08-12 23:45 UTC', onStageClick }) {
-  const currentIndex = STAGES.findIndex((s) => s.id === currentStage);
+  const currentIndex = VERIFICATION_STAGES.findIndex((s) => s.id === currentStage);
   const activeIndex = currentIndex >= 0 ? currentIndex : 4; // Default to verified
 
   return (
@@ -24,12 +15,12 @@ export function VerificationTimeline({ currentStage = 'verified', timestamp = '2
           <span className="pv-timeline-time">Last Execution Audit: {timestamp}</span>
         </div>
         <div className="pv-timeline-status">
-          Stage {activeIndex + 1} of {STAGES.length}: <strong>{STAGES[activeIndex]?.label.toUpperCase()}</strong>
+          Stage {activeIndex + 1} of {VERIFICATION_STAGES.length}: <strong>{VERIFICATION_STAGES[activeIndex]?.label.toUpperCase()}</strong>
         </div>
       </div>
 
       <div className="pv-pipeline-track">
-        {STAGES.map((stage, idx) => {
+        {VERIFICATION_STAGES.map((stage, idx) => {
           const isDone = idx < activeIndex;
           const isCurrent = idx === activeIndex;
           const isPending = idx > activeIndex;
@@ -50,7 +41,7 @@ export function VerificationTimeline({ currentStage = 'verified', timestamp = '2
                 <span className="pv-step-name">{stage.label}</span>
                 <span className="pv-step-desc">{stage.desc}</span>
               </div>
-              {idx < STAGES.length - 1 && <div className="pv-step-connector" />}
+              {idx < VERIFICATION_STAGES.length - 1 && <div className="pv-step-connector" />}
             </div>
           );
         })}

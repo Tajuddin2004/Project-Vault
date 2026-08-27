@@ -3,8 +3,60 @@ import crypto from 'crypto';
 import EmailOtp from '../models/EmailOtp.js';
 import PasswordResetToken from '../models/PasswordResetToken.js';
 import User from '../models/User.js';
+import Project from '../models/Project.js';
 import { sendOtpEmail, sendPasswordResetLinkEmail, sendWelcomeEmail } from '../services/email.service.js';
 import { generateToken } from '../utils/jwt.js';
+import { fileUrl } from '../middleware/upload.middleware.js';
+
+export async function seedUserMockProjects(user) {
+  if (user.projects && user.projects.length >= 5) return;
+
+  const CATEGORIES = {
+    Technology: ['AI & Machine Learning', 'Cloud & Systems', 'Web3 & Security', 'Fullstack & Web', 'DevTools & CLI'],
+    Medical: ['BioMed Telemetry', 'Clinical AI Triage', 'Health Informatics', 'Medical Imaging'],
+    'Real Estate': ['Spatial GIS Analytics', 'PropTech Automation', 'Housing Valuation', 'Zoning Insights'],
+  };
+
+  const SAMPLE_THUMBNAILS = [
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&q=80',
+    'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80',
+    'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&q=80',
+    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&q=80',
+    'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80',
+  ];
+
+  const projectIds = [];
+  const catKeys = Object.keys(CATEGORIES);
+  const userName = user.name || 'User';
+
+  for (let i = 1; i <= 5; i++) {
+    const category = catKeys[i % catKeys.length];
+    const subCats = CATEGORIES[category];
+    const subCategory = subCats[i % subCats.length];
+    const score = Math.floor(90 + Math.random() * 10);
+
+    const project = await Project.create({
+      ownerId: user._id,
+      ownerName: user.name,
+      title: `${userName.split(' ')[0]}'s ${subCategory} System #${i}`,
+      category,
+      subCategory,
+      description: `High-performance ${subCategory.toLowerCase()} implementation built by ${userName} for enterprise benchmark suite #${i}.`,
+      readme: `# ${userName.split(' ')[0]}'s Project #${i}\nDetailed documentation for ${subCategory}.`,
+      thumbnailUrl: SAMPLE_THUMBNAILS[i % SAMPLE_THUMBNAILS.length],
+      githubUrl: `${user.profile?.githubUrl || 'https://github.com'}/project-${i}`,
+      liveUrl: `https://demo-project-${i}.${userName.split(' ')[0].toLowerCase()}.io`,
+      technologies: user.profile?.skills || ['React', 'Node.js', 'MongoDB', 'Docker'],
+      status: i % 3 === 0 ? 'pending_verification' : 'published',
+      healthScore: score,
+    });
+
+    projectIds.push(project._id);
+  }
+
+  user.projects = [...(user.projects || []), ...projectIds];
+  await user.save();
+}
 
 // Password validation rule: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 symbol
 function validatePasswordRules(password) {
@@ -459,6 +511,8 @@ export async function login(req, res, next) {
       });
     }
 
+    await seedUserMockProjects(user);
+
     const token = generateToken({ userId: user._id, role: user.role });
 
     res.status(200).json({
@@ -480,6 +534,8 @@ export async function login(req, res, next) {
 
 export async function getMe(req, res, next) {
   try {
+    await seedUserMockProjects(req.user);
+
     res.status(200).json({
       user: {
         id: req.user._id,
@@ -497,12 +553,45 @@ export async function getMe(req, res, next) {
 
 export async function updateProfile(req, res, next) {
   try {
-    const { name, department, college, bio, githubUrl, linkedinUrl, avatarUrl, roleTitle, phone, location, skills, education, experiences, resumeFile } = req.body;
+    const { name, department, college, bio, githubUrl, linkedinUrl, avatarUrl, roleTitle, phone, location } = req.body;
+    let { skills, education, experiences, resumeFile } = req.body;
+
+    // Parse JSON stringified fields if submitted via FormData
+    if (typeof skills === 'string') {
+      try { skills = JSON.parse(skills); } catch (e) {}
+    }
+    if (typeof education === 'string') {
+      try { education = JSON.parse(education); } catch (e) {}
+    }
+    if (typeof experiences === 'string') {
+      try { experiences = JSON.parse(experiences); } catch (e) {}
+    }
+    if (typeof resumeFile === 'string') {
+      try { resumeFile = JSON.parse(resumeFile); } catch (e) {}
+    }
+
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found.' });
 
     if (name && name.trim()) {
       user.name = name.trim();
+    }
+
+    // Process Multer file uploads for avatar image and resume document
+    let computedAvatarUrl = avatarUrl;
+    if (req.files?.avatar && req.files.avatar[0]) {
+      computedAvatarUrl = fileUrl(req, req.files.avatar[0]);
+    }
+
+    let computedResumeFile = resumeFile;
+    if (req.files?.resume && req.files.resume[0]) {
+      const file = req.files.resume[0];
+      computedResumeFile = {
+        name: file.originalname,
+        dataUrl: fileUrl(req, file),
+        size: (file.size / 1024).toFixed(1) + ' KB',
+        uploadDate: new Date().toLocaleDateString(),
+      };
     }
 
     user.profile = {
@@ -512,14 +601,14 @@ export async function updateProfile(req, res, next) {
       bio: bio !== undefined ? bio : user.profile?.bio,
       githubUrl: githubUrl !== undefined ? githubUrl : user.profile?.githubUrl,
       linkedinUrl: linkedinUrl !== undefined ? linkedinUrl : user.profile?.linkedinUrl,
-      avatarUrl: avatarUrl !== undefined ? avatarUrl : user.profile?.avatarUrl,
+      avatarUrl: computedAvatarUrl !== undefined ? computedAvatarUrl : user.profile?.avatarUrl,
       roleTitle: roleTitle !== undefined ? roleTitle : user.profile?.roleTitle,
       phone: phone !== undefined ? phone : user.profile?.phone,
       location: location !== undefined ? location : user.profile?.location,
       skills: skills !== undefined ? skills : user.profile?.skills,
       education: education !== undefined ? education : user.profile?.education,
       experiences: experiences !== undefined ? experiences : user.profile?.experiences,
-      resumeFile: resumeFile !== undefined ? resumeFile : user.profile?.resumeFile,
+      resumeFile: computedResumeFile !== undefined ? computedResumeFile : user.profile?.resumeFile,
     };
 
     await user.save();
@@ -538,3 +627,4 @@ export async function updateProfile(req, res, next) {
     next(error);
   }
 }
+

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'react-toastify';
 import { Logo } from '../components/Logo';
 import { authApi } from '../api/auth';
 import { promptGoogleSignIn } from '../utils/googleAuth';
@@ -97,6 +98,7 @@ export function SignIn({ onNavigate, onAuthSuccess }) {
         }, 600);
       } else {
         setErrorMsg(err.message || 'Failed to sign in.');
+        toast.error(err.message || 'Failed to sign in.');
       }
     } finally {
       setIsLoading(false);
@@ -113,18 +115,19 @@ export function SignIn({ onNavigate, onAuthSuccess }) {
       clientId,
       async (googleUser) => {
         try {
-          // Send real Google account email to backend
           const res = await authApi.googleOAuth({
             email: googleUser.email,
             name: googleUser.name || googleUser.email.split('@')[0],
           });
           setSuccessMsg(`Welcome back, ${res.user.name}!`);
+          toast.success(`Welcome back, ${res.user.name}!`);
           setTimeout(() => {
             if (onAuthSuccess) onAuthSuccess(res.user, res.token);
             else onNavigate('/dashboard');
           }, 600);
         } catch (err) {
           setErrorMsg(err.message || 'Google OAuth authentication failed.');
+          toast.error(err.message || 'Google OAuth authentication failed.');
         } finally {
           setIsLoading(false);
         }
@@ -132,6 +135,7 @@ export function SignIn({ onNavigate, onAuthSuccess }) {
       (err) => {
         setIsLoading(false);
         setErrorMsg(err.message || 'Google popup closed or failed.');
+        toast.error(err.message || 'Google popup closed or failed.');
       }
     );
   };
@@ -147,12 +151,14 @@ export function SignIn({ onNavigate, onAuthSuccess }) {
         githubUrl: 'https://github.com',
       });
       setSuccessMsg('Signed in with GitHub!');
+      toast.success('Signed in with GitHub!');
       setTimeout(() => {
         if (onAuthSuccess) onAuthSuccess(res.user, res.token);
         else onNavigate('/dashboard');
       }, 600);
     } catch (err) {
       setErrorMsg(err.message || 'GitHub OAuth failed.');
+      toast.error(err.message || 'GitHub OAuth failed.');
     } finally {
       setIsLoading(false);
     }
